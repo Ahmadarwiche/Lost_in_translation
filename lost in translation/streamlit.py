@@ -10,8 +10,9 @@ df1_2019 = pd.read_csv('objets-trouves_2019.csv')
 df1_2020 = pd.read_csv('objets-trouves_2020.csv')
 df1_2021 = pd.read_csv('objets-trouves_2021.csv')
 df1_2022 = pd.read_csv('objets-trouves_2022.csv')
-
 df_temperature_jour=pd.read_csv('temperature_jour.csv')
+df_frequentation = pd.read_csv('frequentation-gares-netoyé.csv')
+df_frequentation.set_index('gare', inplace=True)
 
 dico_annee_df = {
     2019 : df1_2019,
@@ -98,7 +99,7 @@ fig.update_layout(
 # Afficher le graphe avec Streamlit
 st.plotly_chart(fig)
 
-################ MEME CHOSE AVEC MATPLOTLIB###########################################################################################################################
+################{MEME CHOSE AVEC MATPLOTLIB}###########################################################################################################################
 # st.subheader("Scatterplot objet perdu/température")
 # df1_jour = pd.read_csv('objet-perdu-jour.csv')
 # # Créer un scatterplot interactif avec Matplotlib
@@ -110,4 +111,27 @@ st.plotly_chart(fig)
 
 # # Afficher le graphe avec Streamlit
 # st.pyplot(fig)
-#################################################################################################################################
+####################{PARTIE C : CARTE DE PARIS}#############################################################################################################
+import folium
+from streamlit_folium import folium_static
+
+st.subheader("Carte gares Paris: objet trouvé/fréquentation")
+dico_year = {
+    2019 : ['frequentation_2019'],
+    2020 : ['frequentation_2020'],
+    2021 : ['frequentation_2021']
+    }
+selected_annee = st.selectbox('Sélectionnez une année', dico_year.keys())
+#df1_2019.groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc['city'].sum()[0]]
+m = folium.Map(location=[ 48.8566, 2.3522], zoom_start=12)
+
+# Ajout des marqueurs pour chaque ville
+for city in df_frequentation.index:
+    frequentation = df_frequentation.loc[city][dico_year[selected_annee][0]]
+    #objets_trouvés = dico_year[selected_annee][1]
+    coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
+    popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} "
+    folium.Marker(location=coord, popup=popup).add_to(m)
+#<br> nb d'objets trouvés en {selected_annee} : {objets_trouvés} 
+# Affichage de la carte avec Streamlit
+folium_static(m)
