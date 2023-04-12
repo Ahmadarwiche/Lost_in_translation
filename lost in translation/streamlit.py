@@ -116,6 +116,19 @@ import folium
 from streamlit_folium import folium_static
 
 st.subheader("Carte gares Paris: objet trouvé/fréquentation")
+
+list_objets_type = ['tous', 'Porte-monnaie / portefeuille, argent, titres',
+       'Bagagerie: sacs, valises, cartables', 'Vêtements, chaussures',
+       "Pièces d'identités et papiers personnels",
+       'Clés, porte-clés, badge magnétique',
+       'Appareils électroniques, informatiques, appareils photo',
+       'Vélos, trottinettes, accessoires 2 roues', 'Optique',
+       'Livres, articles de papéterie', 'Divers', 'Bijoux, montres',
+       "Articles d'enfants, de puériculture",
+       'Articles de sport, loisirs, camping', 'Instruments de musique',
+       'Articles médicaux', 'Parapluies']
+selected_objet_type = st.selectbox('Sélectionnez un type ', list_objets_type)
+
 dico_year = {
     2019 : ['frequentation_2019', df1_2019],
     2020 : ['frequentation_2020', df1_2020],
@@ -126,12 +139,19 @@ selected_annee = st.selectbox('Sélectionnez une année', dico_year.keys())
 m = folium.Map(location=[ 48.8566, 2.3522], zoom_start=12)
 
 # Ajout des marqueurs pour chaque ville
-for city in df_frequentation.index:
-    frequentation = df_frequentation.loc[city][dico_year[selected_annee][0]]
-    objets_trouvés = dico_year[selected_annee][1].groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc[city].sum()[0]
-    coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
-    popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} <br> nb d'objets trouvés en {selected_annee} : {objets_trouvés}"
-    folium.Marker(location=coord, popup=popup).add_to(m)
-    
+if selected_objet_type == 'tous':
+    for city in df_frequentation.index:
+        frequentation = df_frequentation.loc[city][dico_year[selected_annee][0]]
+        objets_trouvés = dico_year[selected_annee][1].groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc[city].sum()[0]
+        coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
+        popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} <br> nb d'objets trouvés en {selected_annee} : {objets_trouvés}"
+        folium.Marker(location=coord, popup=popup).add_to(m)
+else:
+    for city in df_frequentation.index:
+        frequentation = df_frequentation.loc[city][dico_year[selected_annee][0]]
+        objets_trouvés = dico_year[selected_annee][1].groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc[city].loc[selected_objet_type][0]
+        coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
+        popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} <br> nb d'objets trouvés en {selected_annee} : {objets_trouvés}"
+        folium.Marker(location=coord, popup=popup).add_to(m) 
 # Affichage de la carte avec Streamlit
 folium_static(m)
