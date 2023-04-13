@@ -24,15 +24,14 @@ dico_annee_df = {
 ###############{PARTIE A : tableau + histogramme objet perdu/semaine}#################################################################
 st.title("Objet trouvé à paris")
 # Creer un boutton des années
+st.subheader("Tableau des données")
 selected_anee = st.selectbox('Sélectionnez une année', dico_annee_df.keys())
-
+st.write("Informations objets trouvés pour l'année :", selected_anee)
 # Créer un tableau objet trouvé/semaine
 if selected_anee != 'toutes': 
-    st.subheader("Tableau des données")
-    st.write("Informations objets trouvés pour l'année :", selected_anee)
     st.write("Semaine/objet trouvés:")
-    dico_annee_df[selected_anee]['date'] = dico_annee_df[selected_anee]['fields.date']
-    st.write(dico_annee_df[selected_anee]['date'].value_counts().sort_index()) 
+    dico_annee_df[selected_anee]['nb_objet'] = dico_annee_df[selected_anee]['fields.date']
+    st.write(dico_annee_df[selected_anee]['nb_objet'].value_counts().sort_index()) 
     #########################################################################
     # Faire un histogramme
     st.subheader("Histogramme")
@@ -78,40 +77,7 @@ else :
     st.plotly_chart(fig)
     
     
-################{PARTIE B : Scatterplot temerature/objet perdu}########################################################################################################################
-st.subheader("Scatterplot objet perdu/température")
-df1_jour = pd.read_csv('objet-perdu-jour.csv')
-fig = go.Figure()
-# Ajouter les données au scatterplot
-fig.add_trace(go.Scatter(
-    x=df_temperature_jour['temperature_2m (°C)'],
-    y=df1_jour['objet_jour'],
-    mode='markers',
-    marker=dict(color='blue', size=5),
-    name='Scatterplot'
-))
-# Mettre en forme le graphe
-fig.update_layout(
-    title='Scatterplot interactif',
-    xaxis_title='Temperature moyenne par jour',
-    yaxis_title='nb objet trouvé par jour',
-)
-# Afficher le graphe avec Streamlit
-st.plotly_chart(fig)
-
-################{MEME CHOSE AVEC MATPLOTLIB}###########################################################################################################################
-# st.subheader("Scatterplot objet perdu/température")
-# df1_jour = pd.read_csv('objet-perdu-jour.csv')
-# # Créer un scatterplot interactif avec Matplotlib
-# fig, ax = plt.subplots()
-# ax.scatter( df_temperature_jour['temperature_2m (°C)'],df1_jour['objet_jour'], c='blue', s=8)
-# ax.set_title('Scatterplot interactif')
-# ax.set_xlabel('temperature moyenne par jour')
-# ax.set_ylabel('nb objet toruvé par jour ')
-
-# # Afficher le graphe avec Streamlit
-# st.pyplot(fig)
-####################{PARTIE C : CARTE DE PARIS}#############################################################################################################
+####################{PARTIE B : CARTE DE PARIS}#############################################################################################################
 import folium
 from streamlit_folium import folium_static
 
@@ -145,13 +111,66 @@ if selected_objet_type == 'tous':
         objets_trouvés = dico_year[selected_annee][1].groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc[city].sum()[0]
         coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
         popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} <br> nb d'objets trouvés en {selected_annee} : {objets_trouvés}"
-        folium.Marker(location=coord, popup=popup).add_to(m)
+        folium.Marker(location=coord, popup=folium.Popup(popup, max_width=500)).add_to(m)
 else:
     for city in df_frequentation.index:
         frequentation = df_frequentation.loc[city][dico_year[selected_annee][0]]
         objets_trouvés = dico_year[selected_annee][1].groupby(['fields.gc_obo_gare_origine_r_name', 'fields.gc_obo_type_c']).count().loc[city].loc[selected_objet_type][0]
         coord = df_frequentation.loc[city][['latitude','longitude']].to_list()
         popup = f"{city} <br> frequentation en {selected_annee}: {frequentation} <br> nb d'objets trouvés en {selected_annee} : {objets_trouvés}"
-        folium.Marker(location=coord, popup=popup).add_to(m) 
+        folium.Marker(location=coord, popup=folium.Popup(popup, max_width=500)).add_to(m) 
 # Affichage de la carte avec Streamlit
 folium_static(m)
+#################{PARTIE C_1 : Scatterplot temerature/objet perdu}########################################################################################################################
+st.subheader("Scatterplot objet perdu/température")
+df1_jour = pd.read_csv('objet-perdu-jour.csv')
+fig = go.Figure()
+# Ajouter les données au scatterplot
+fig.add_trace(go.Scatter(
+    x=df_temperature_jour['temperature_2m (°C)'],
+    y=df1_jour['objet_jour'],
+    mode='markers',
+    marker=dict(color='blue', size=5),
+    name='Scatterplot'
+))
+# Mettre en forme le graphe
+fig.update_layout(
+    title='Scatterplot interactif',
+    xaxis_title='Temperature moyenne par jour',
+    yaxis_title='nb objet trouvé par jour',
+)
+# Afficher le graphe avec Streamlit
+st.plotly_chart(fig)
+#################{PARTIE C_2 : MEDIAN / SAISON}#####################################################################################################
+st.subheader("Médiane du nombre d’objets trouvés/saison")
+df1 = df1.rename(columns={'fields.date': 'date', 'fields.gc_obo_gare_origine_r_name': 'gare', 'fields.gc_obo_type_c': 'type_objet'})
+# retirer les colonnes inutiles
+df1 = df1.drop('type_objet', axis=1)
+# Conversion de la colonne 'fields.date' en type 'datetime'
+df1['date'] = pd.to_datetime(df1['date'])
+# Filtrage des données entre les deux dates spécifiées sans modifier le DataFrame d'origine
+dico_saison = {
+    'hiver 2019'     : ['2019-01-01', '2019-02-28', 'df_hiver_19'],
+    'printemps 2019' : ['2019-03-01', '2019-05-31', 'df_printemps_19'],
+    'été 2019'       : ['2019-06-01', '2019-08-31', 'df_été_19'],
+    'automne 2019'   : ['2019-09-01', '2019-11-30', 'df_automne_19'],
+    'hiver 2020'     : ['2019-12-01', '2020-02-29', 'df_hiver_20'],
+    'printemps 2020' : ['2020-03-01', '2020-05-31', 'df_printemps_20'],
+    'été 2020'       : ['2020-06-01', '2020-08-31', 'df_été_20'],
+    'automne 2020'   : ['2020-09-01', '2020-11-30', 'df_automne_20'],
+    'hiver 2021'     : ['2020-12-01', '2021-02-28', 'df_hiver_21'],
+    'printemps 2021' : ['2021-03-01', '2021-05-31', 'df_printemps_21'],
+    'été 2021'       : ['2021-06-01', '2021-08-31', 'df_été_21'],
+    'automne 2021'   : ['2021-09-01', '2021-11-30', 'df_automne_21'],
+    'hiver 2022'     : ['2021-12-01', '2022-02-28', 'df_hiver_22'],
+    'printemps 2022' : ['2022-03-01', '2022-05-31', 'df_printemps_22'],
+    'été 2022'       : ['2022-06-01', '2022-08-31', 'df_été_22'],
+    'automne 2022'   : ['2022-09-01', '2022-11-30', 'df_automne_22'],
+}
+selected_saison = st.selectbox('Sélectionnez une saison', dico_saison.keys())
+start_date = pd.to_datetime(dico_saison[selected_saison][0])
+end_date = pd.to_datetime(dico_saison[selected_saison][1])
+dico_saison[selected_saison][2] = df1[(df1['date'] >= start_date) & (df1['date'] <= end_date)]
+st.write(f"la médiane du nombre d’objets trouvés en fonction de la saison {selected_saison} est {dico_saison[selected_saison][2].groupby('date')['gare'].count().median()}")
+
+
