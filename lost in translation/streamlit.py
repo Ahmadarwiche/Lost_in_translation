@@ -166,11 +166,39 @@ dico_saison = {
     'printemps 2022' : ['2022-03-01', '2022-05-31', 'df_printemps_22'],
     'été 2022'       : ['2022-06-01', '2022-08-31', 'df_été_22'],
     'automne 2022'   : ['2022-09-01', '2022-11-30', 'df_automne_22'],
+    'hiver 2023'     : ['2022-12-01', '2022-12-31',  'df_hiver_23']             
 }
 selected_saison = st.selectbox('Sélectionnez une saison', dico_saison.keys())
 start_date = pd.to_datetime(dico_saison[selected_saison][0])
 end_date = pd.to_datetime(dico_saison[selected_saison][1])
 dico_saison[selected_saison][2] = df1[(df1['date'] >= start_date) & (df1['date'] <= end_date)]
 st.write(f"la médiane du nombre d’objets trouvés en fonction de la saison {selected_saison} est {dico_saison[selected_saison][2].groupby('date')['gare'].count().median()}")
+######################################################################################
 
+st.subheader("Histogramme nb objet trouvé/saison")
+# je cree une colonne pour de saisons
+# def f(x):
+#     for cle, valeur in dico_saison.items():
+#         start_date = pd.to_datetime(valeur[0])
+#         end_date = pd.to_datetime(valeur[1])
+#         if start_date <= x <= end_date:
+#             return cle
+#     return None
+
+# df1['saison'] = df1['date'].apply(f)
+df1 = pd.read_csv('objets-trouves-saison.csv')
+# df1['nb'] = 1
+import plotly.express as px
+# Créer l'application Streamlit
+# selected_annneee = st.selectbox('Sélectionnez une saison', [2019 , 2020, 2021 , 2022])
+# Afficher le graphique à boîtes
+# for cle, valeur in dico_saison.items():
+#     if selected_annneee == cle.split()[1]:
+#         start_date = pd.to_datetime(valeur[0])
+#         end_date = pd.to_datetime(valeur[1])
+#         fig = px.box(x = cle, y = df1[(df1['date'] >= start_date) & (df1['date'] <= end_date)].groupby('date')['gare'].count() )
+#         st.plotly_chart(fig)
+# fig = px.box(x=df1['saison'], y=df1.groupby('saison')['nb'], points='all')
+# st.plotly_chart(fig)
+#st.write(df1.groupby('saison')['gare'].count(), df1['saison'])
 
