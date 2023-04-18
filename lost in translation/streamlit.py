@@ -174,7 +174,6 @@ end_date = pd.to_datetime(dico_saison[selected_saison][1])
 dico_saison[selected_saison][2] = df1[(df1['date'] >= start_date) & (df1['date'] <= end_date)]
 st.write(f"la médiane du nombre d’objets trouvés en fonction de la saison {selected_saison} est {dico_saison[selected_saison][2].groupby('date')['gare'].count().median()}")
 ######################################################################################
-
 st.subheader("Histogramme nb objet trouvé/saison")
 # je cree une colonne pour de saisons
 # def f(x):
@@ -187,18 +186,12 @@ st.subheader("Histogramme nb objet trouvé/saison")
 
 # df1['saison'] = df1['date'].apply(f)
 df1 = pd.read_csv('objets-trouves-saison.csv')
-# df1['nb'] = 1
 import plotly.express as px
 # Créer l'application Streamlit
-# selected_annneee = st.selectbox('Sélectionnez une saison', [2019 , 2020, 2021 , 2022])
-# Afficher le graphique à boîtes
-# for cle, valeur in dico_saison.items():
-#     if selected_annneee == cle.split()[1]:
-#         start_date = pd.to_datetime(valeur[0])
-#         end_date = pd.to_datetime(valeur[1])
-#         fig = px.box(x = cle, y = df1[(df1['date'] >= start_date) & (df1['date'] <= end_date)].groupby('date')['gare'].count() )
-#         st.plotly_chart(fig)
-# fig = px.box(x=df1['saison'], y=df1.groupby('saison')['nb'], points='all')
-# st.plotly_chart(fig)
-#st.write(df1.groupby('saison')['gare'].count(), df1['saison'])
+selected_annneee = st.selectbox('Sélectionnez une saison', [2019 , 2020, 2021 , 2022])
+df1['date'] = pd.to_datetime(df1['date'])
+df1 = df1[((df1['date'].dt.year == selected_annee-1) & (df1['date'].dt.month == 12)) | ((df1['date'].dt.year == selected_annneee) & (df1['date'].dt.month != 12))]
+fig = px.box(x=df1.groupby(['saison','date']).count().reset_index()['saison'], y= df1.groupby(['saison','date']).count().reset_index()['gare'], points='all')
+st.plotly_chart(fig)
+# ((df1['date'].dt.month == 12) | (df1['date'].dt.year == selected_annneee-1))
 
